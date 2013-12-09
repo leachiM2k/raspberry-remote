@@ -5,7 +5,7 @@
   Contributors:
   - Andre Koehler / info(at)tomate-online(dot)de
   - Gordeev Andrey Vladimirovich / gordeev(at)openpyro(dot)com
-
+  
   Project home: http://code.google.com/p/rc-switch/
 
   This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #else
     #include <wiringPi.h>
     #include <stdint.h>
+    #define NULL 0
     #define CHANGE 1
 #ifdef __cplusplus
 extern "C"{
@@ -38,7 +39,6 @@ typedef uint8_t boolean;
 typedef uint8_t byte;
 
 #if !defined(NULL)
-    #define NULL 0
 #endif
 #ifdef __cplusplus
 }
@@ -55,7 +55,7 @@ class RCSwitch {
 
   public:
     RCSwitch();
-
+    
     void switchOn(int nGroupNumber, int nSwitchNumber);
     void switchOff(int nGroupNumber, int nSwitchNumber);
     void switchOn(char* sGroup, int nSwitchNumber);
@@ -66,27 +66,27 @@ class RCSwitch {
     void sendTriState(char* Code);
     void send(unsigned long Code, unsigned int length);
     void send(char* Code);
-
+    
     void enableReceive(int interrupt);
     void enableReceive();
     void disableReceive();
     bool available();
-    void resetAvailable();
-
+	void resetAvailable();
+	
     unsigned long getReceivedValue();
     unsigned int getReceivedBitlength();
     unsigned int getReceivedDelay();
-    unsigned int getReceivedProtocol();
+	unsigned int getReceivedProtocol();
     unsigned int* getReceivedRawdata();
-
+  
     void enableTransmit(int nTransmitterPin);
     void disableTransmit();
     void setPulseLength(int nPulseLength);
     void setRepeatTransmit(int nRepeatTransmit);
     void setReceiveTolerance(int nPercent);
-    void setProtocol(int nProtocol);
-    void setProtocol(int nProtocol, int nPulseLength);
-
+	void setProtocol(int nProtocol);
+	void setProtocol(int nProtocol, int nPulseLength);
+  
   private:
     char* getCodeWordB(int nGroupNumber, int nSwitchNumber, boolean bStatus);
     char* getCodeWordA(char* sGroup, int nSwitchNumber, boolean bStatus);
@@ -100,23 +100,24 @@ class RCSwitch {
     void transmit(int nHighPulses, int nLowPulses);
 
     static char* dec2binWzerofill(unsigned long dec, unsigned int length);
-
+    
     static void handleInterrupt();
-    static bool receiveProtocol1(int changeCount);
-    static bool receiveProtocol2(int changeCount);
+	static bool receiveProtocol1(unsigned int changeCount);
+	static bool receiveProtocol2(unsigned int changeCount);
     int nReceiverInterrupt;
     int nTransmitterPin;
     int nPulseLength;
     int nRepeatTransmit;
-    char nProtocol;
+	char nProtocol;
 
-    static int nReceiveTolerance;
+	static int nReceiveTolerance;
     static unsigned long nReceivedValue;
     static unsigned int nReceivedBitlength;
-    static unsigned int nReceivedDelay;
-    static unsigned int nReceivedProtocol;
+	static unsigned int nReceivedDelay;
+	static unsigned int nReceivedProtocol;
     static unsigned int timings[RCSWITCH_MAX_CHANGES];
 
+    
 };
 
 #endif

@@ -5,7 +5,7 @@ int nSwitchNumber;
 int nAction;
 int nPlugs;
 int nTimeout;
-int PORT = 11337;
+int PORT = 11984;
 
 void error(const char *msg);
 int getAddr(const char* nGroup, int nSwitchNumber);

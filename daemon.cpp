@@ -27,6 +27,7 @@
  */
 
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -92,8 +93,6 @@ int main(int argc, char* argv[]) {
     if (n < 0)
       error("ERROR reading from socket");
 
-
-    printf("message: %s\n", buffer);
     if (strlen(buffer) >= 8) {
       for (int i=0; i<5; i++) {
         nGroup[i] = buffer[i];
@@ -105,53 +104,51 @@ int main(int argc, char* argv[]) {
       }
       nAction = buffer[7]-48;
       nTimeout=0;
+	/*
       if (strlen(buffer) >= 9) nTimeout = buffer[8]-48;
       if (strlen(buffer) >= 10) nTimeout = nTimeout*10+buffer[9]-48;
       if (strlen(buffer) >= 11) nTimeout = nTimeout*10+buffer[10]-48;
+      if(nTimeout < 0)  nTimeout = 0;
+	*/
+
+      // printf("code: %s | unit: %d | action: %d | timeout: %d \n", nGroup, nSwitchNumber, nAction, nTimeout);
 
       /**
        * handle messages
        */
       int nAddr = getAddr(nGroup, nSwitchNumber);
+printf("nAddr: %d", nAddr);
       char msg[13];
-      if (nAddr > nPlugs) {
-        printf("Switch out of range: %s:%d\n", nGroup, nSwitchNumber);
-        n = write(newsockfd,"2",1);
-      }
-      else {
         switch (nAction) {
           /**
            * off
            */
           case 0:
-            piThreadCreate(switchOff);
-            //mySwitch.switchOff(nGroup, nSwitchNumber);
+            // mySwitch.switchOff(nGroup, nSwitchNumber);
             nState[nAddr] = 0;
-            //sprintf(msg, "nState[%d] = %d", nAddr, nState[nAddr]);
             sprintf(msg, "%d", nState[nAddr]);
             n = write(newsockfd,msg,1);
+            piThreadCreate(switchOff);
             break;
           /**
            * on
            */
           case 1:
-            piThreadCreate(switchOn);
-            //mySwitch.switchOn(nGroup, nSwitchNumber);
+            // piThreadCreate(switchOn);
+            // mySwitch.switchOn(nGroup, nSwitchNumber);
             nState[nAddr] = 1;
-            //sprintf(msg, "nState[%d] = %d", nAddr, nState[nAddr]);
             sprintf(msg, "%d", nState[nAddr]);
             n = write(newsockfd,msg,1);
+            piThreadCreate(switchOn);
             break;
           /**
            * status
            */
           case 2:
-            //sprintf(msg, "nState[%d] = %d", nAddr, nState[nAddr]);
             sprintf(msg, "%d", nState[nAddr]);
             n = write(newsockfd,msg,1);
             break;
         }
-      }
     }
     else {
       printf("message corrupted or incomplete");
@@ -183,20 +180,15 @@ void error(const char *msg)
  * calculate the array address of the power state
  */
 int getAddr(const char* nGroup, int nSwitchNumber) {
-  int bin = atoi(nGroup);
-  int base = 1;
-  int dec = 0;
-  int digit;
-
-  while(bin!=0)
+  int i=0,len=0,r=0,w;
+  len = strlen(nGroup);
+  for(i=0;i<len;i++)
   {
-       digit=bin%10;
-       dec=dec+digit*base;
-       bin=bin/10;
-       base=base*2;
-    }
+          w=pow(2,i);
+          r+=(nGroup[i]-48)*w;
+  }
 
-  return (dec-1)*5+nSwitchNumber-1;
+  return r + nSwitchNumber;
 }
 
 PI_THREAD(switchOn) {
@@ -205,7 +197,8 @@ PI_THREAD(switchOn) {
   int tSwitchNumber;
   memcpy(tGroup, nGroup, sizeof(tGroup));
   tSwitchNumber = nSwitchNumber;
-  sleep(nTimeout*60);
+  printf("######## code: %s | unit: %d | timeout: %d \n", nGroup, tSwitchNumber, nTimeout);
+  // sleep(nTimeout*60);
   mySwitch.switchOn(tGroup, tSwitchNumber);
   return 0;
 }
@@ -216,7 +209,8 @@ PI_THREAD(switchOff) {
   int tSwitchNumber;
   memcpy(tGroup, nGroup, sizeof(tGroup));
   tSwitchNumber = nSwitchNumber;
-  sleep(nTimeout*60);
+  printf("code: %s | unit: %d | timeout: %d \n", nGroup, tSwitchNumber, nTimeout);
+  // sleep(nTimeout*60);
   mySwitch.switchOff(tGroup, tSwitchNumber);
   return 0;
 }
